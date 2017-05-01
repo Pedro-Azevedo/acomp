@@ -81,27 +81,27 @@ FimEsc:         POP     R3
 ;===============================================================================
 inicio:         MOV     R1, SP_INICIAL
                 MOV     SP, R1
-		            MOV	R3,8
-				                CALL    LimpaJanela
-		            MOV     R1, XY_INICIAL
+		MOV	R3,8
+			CALL    LimpaJanela
+		MOV     R1, XY_INICIAL
                 BR  cimabaixo   
-meio:		        ADD	R1, 0100h
-		            PUSH    PlanoJogo           ; Passagem de parametros pelo STACK
+meio:		ADD	R1, 0100h
+		PUSH    PlanoJogo           ; Passagem de parametros pelo STACK
                 PUSH    R1                  ; Passagem de parametros pelo STACK
-				                CALL	EscString
+			 CALL	EscString
                 ADD     R1, 0100h
                 PUSH    Separador           ; Passagem de parametros pelo STACK
                 PUSH    R1                  ; Passagem de parametros pelo STACK
-                		    CALL    EscString
-		            DEC	R3
-		            CMP	R3, R0
-		            BR.NZ	meio
-cimabaixo:	    ADD	R1, 0100h
+                	CALL    EscString
+		DEC	R3
+		CMP	R3, R0
+		BR.NZ	meio
+cimabaixo:	ADD	R1, 0100h
                 PUSH    Limites             ; Passagem de parametros pelo STACK
                 PUSH    R1                  ; Passagem de parametros pelo STACK
                 		    CALL    EscString
-		            CMP	R3, 0008h
-		            BR.Z	meio
+		CMP	R3, 0008h
+		BR.Z	meio
 Fim:            BR      Fim
 ;===============================================================================
 
