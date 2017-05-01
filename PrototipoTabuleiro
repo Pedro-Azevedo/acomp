@@ -1,0 +1,108 @@
+
+;===============================================================================
+; ZONA I: Definicao de constantes
+;         Pseudo-instrucao : EQU
+;===============================================================================
+; STACK POINTER
+SP_INICIAL      EQU     FDFFh
+
+; I/O a partir de FF00H
+IO_CURSOR       EQU     FFFCh
+IO_WRITE        EQU     FFFEh
+
+LIMPAR_JANELA   EQU     FFFFh
+XY_INICIAL      EQU     0004h
+FIM_TEXTO       EQU     '@'
+
+;===============================================================================
+; ZONA II: Definicao de variaveis
+;===============================================================================
+                ORIG    8000h
+;Variáveis de Texto
+PlanoJogo       STR     '<|!   !   !   !   !|0P/0B|>',FIM_TEXTO
+Limites       	STR	'=========================', FIM_TEXTO
+Separador       STR     '-------------------------', FIM_TEXTO
+
+;===============================================================================
+; ZONA III: Codigo
+;===============================================================================
+                ORIG    0000h
+                JMP     inicio
+
+;===============================================================================
+; LimpaJanela: Rotina que limpa a janela de texto.
+;===============================================================================
+LimpaJanela:    PUSH R2
+                MOV     R2, LIMPAR_JANELA
+		MOV     M[IO_CURSOR], R2
+                POP R2
+                RET
+
+;===============================================================================
+; EscCar: Rotina que efectua a escrita de um caracter para o ecran.
+;         O caracter pode ser visualizado na janela de texto.
+;               Entradas: R1 - Caracter a escrever
+;               Saidas: ---
+;               Efeitos: alteracao da posicao de memoria M[IO]
+;===============================================================================
+EscCar:         MOV     M[IO_WRITE], R1
+                RET  
+
+;===============================================================================
+; EscString: Rotina que efectua a escrita de uma cadeia de caracter, terminada
+;            pelo caracter FIM_TEXTO, na janela de texto numa posicao 
+;            especificada. Pode-se definir como terminador qualquer caracter 
+;            ASCII. 
+;               Entradas: pilha - posicao para escrita do primeiro carater 
+;                         pilha - apontador para o inicio da "string"
+;               Saidas: ---
+;               Efeitos: ---
+;===============================================================================
+EscString:      PUSH    R1
+                PUSH    R2
+				PUSH    R3
+                MOV     R2, M[SP+6]   ; Apontador para inicio da "string"
+                MOV     R3, M[SP+5]   ; Localizacao do primeiro carater
+Ciclo:          MOV     M[IO_CURSOR], R3
+                MOV     R1, M[R2]
+                CMP     R1, FIM_TEXTO
+                BR.Z    FimEsc
+                CALL    EscCar
+                INC     R2
+                INC     R3
+                BR      Ciclo
+FimEsc:         POP     R3
+                POP     R2
+                POP     R1
+                RETN    2                ; Actualiza STACK
+
+;===============================================================================
+;                                Programa prinicipal
+;===============================================================================
+inicio:         MOV     R1, SP_INICIAL
+                MOV     SP, R1
+		            MOV	R3,8
+				                CALL    LimpaJanela
+		            MOV     R1, XY_INICIAL
+                BR  cimabaixo   
+meio:		        ADD	R1, 0100h
+		            PUSH    PlanoJogo           ; Passagem de parametros pelo STACK
+                PUSH    R1                  ; Passagem de parametros pelo STACK
+				                CALL	EscString
+                ADD     R1, 0100h
+                PUSH    Separador           ; Passagem de parametros pelo STACK
+                PUSH    R1                  ; Passagem de parametros pelo STACK
+                		    CALL    EscString
+		            DEC	R3
+		            CMP	R3, R0
+		            BR.NZ	meio
+cimabaixo:	    ADD	R1, 0100h
+                PUSH    Limites             ; Passagem de parametros pelo STACK
+                PUSH    R1                  ; Passagem de parametros pelo STACK
+                		    CALL    EscString
+		            CMP	R3, 0008h
+		            BR.Z	meio
+Fim:            BR      Fim
+;===============================================================================
+
+
