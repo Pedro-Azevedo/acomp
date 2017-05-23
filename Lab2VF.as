@@ -721,10 +721,10 @@ tentar:				PUSH	R2
 					MOV 	R3, M[EndofTimeFlag];Guardar a flag do fim do cronometro
 					CMP 	R3, 0001h  			;Verificar se a flag esta ativa 
 					BR.Z 	FimLose  			;Se estiver, saltar para a etiqueta FimLose (o jogador perdeu)
+					CALL 	Jogada
 					MOV 	R4, M[RIGHT_POS]  	;Guardar o numero de cores certas na posicao certa
 					CMP 	R4, 0004h   		;Verificar se o utilizador ja acertou na sequencia
 					BR.Z 	FimWin  			;Se ja tiver acertado, saltar para a etiqueta FimWin(o jogador ganhou)
-					CALL 	Jogada
 					SUB		R2, 0200h           ;Passar à linha superior (proxima jogada)
 					DEC		R1                  ;Decrementar o numero de jogadas 
 					BR.NZ	tentar              ;Enquanto nao for zero, continuar a jogar
