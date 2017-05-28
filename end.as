@@ -53,7 +53,11 @@ PlanoJogo       STR     ' |!   !   !   !   !| P/  B|', FIM_TEXTO
 PlanoJogo2      STR 	' |!   !   !   !   !   !| P/  B|', FIM_TEXTO
 PlanoJogo3      STR     ' |!   !   !   !   !   !   !| P/  B|', FIM_TEXTO
 Limites       	STR	'<=========================>', FIM_TEXTO
+Limites2		STR '<==========================>', FIM_TEXTO
+Limites3   		STR '<==================================>', FIM_TEXTO
 Separador       STR     ' -------------------------', FIM_TEXTO
+Separador2      STR     ' --------------------------', FIM_TEXTO
+Separador3      STR     ' ----------------------------------', FIM_TEXTO
 EcraInicialS1	STR	'   _   _     _    ___  _____  ___  ___   _   _   _ _       __', FIM_TEXTO
 EcraInicialS2	STR	'  / \ / \   /_\  |___    |   |___ |___| / \ / \   |  |\ | |  \', FIM_TEXTO
 EcraInicialS3	STR	' /   V   \ /   \  ___|   |   |___ |\   /   V   \ _|_ | \| |__/', FIM_TEXTO
@@ -107,7 +111,7 @@ TentC		WORD	0000h
 TentD		WORD	0000h
 ;Variaveis para o cronometro
 Aux7		WORD	0000h
-Aux6		WORD	0000h
+Aux6		WORD	0004h
 Aux5		WORD	0000h
 Aux4		WORD	0000h
 RIGHT_POS	WORD 	0000h		;numero de cores certas na posicao certa
@@ -359,15 +363,15 @@ EscEcraDific2: 	PUSH	R1
 
 
 ;===============================================================================
-;  Tabuleiro: gera o tabuleiro onde o jogo será jogado
+;  Tabuleiro4: gera o tabuleiro onde o jogo será jogado
 ;===============================================================================
-Tabuleiro:	PUSH	R1
+Tabuleiro4:	PUSH	R1
 			PUSH	R3
 			MOV		R3, 000bh			; numero de linhas do tabuleiro(10 para jogar + 1 para a solucao)
 			CALL    LimpaJanela
 			MOV     R1, XY_INICIAL	    ; coloca R1 a apontar para a pos inicial
-            BR  	cimabaixo 
-meio:		ADD     R1, 0100h			; Mover o cursor para escrever o texto
+            BR  	cimabaixo4 
+meio4:		ADD     R1, 0100h			; Mover o cursor para escrever o texto
 			PUSH    PlanoJogo           ; Passagem de parametros pelo STACK
             PUSH    R1                  ; Passagem de parametros pelo STACK
 			CALL	EscString
@@ -378,16 +382,81 @@ meio:		ADD     R1, 0100h			; Mover o cursor para escrever o texto
             CALL    EscString
 			DEC		R3 					; por cada linha de tabuleiro, decrementa o numero de linhas
 			CMP		R3, R0		    	; todos os espacos de jogo estao criados quando R3=0
-			BR.NZ	meio 				; enquanto nao chegar a zero salta para a etiqueta "meio" para continuar a escrever
-cimabaixo:	ADD	R1, 0100h			; Mover o cursor para escrever o texto
+			BR.NZ	meio4 				; enquanto nao chegar a zero salta para a etiqueta "meio" para continuar a escrever
+cimabaixo4:	ADD	R1, 0100h			; Mover o cursor para escrever o texto
             PUSH    Limites             ; Passagem de parametros pelo STACK
             PUSH    R1                  ; Passagem de parametros pelo STACK
             CALL    EscString
 			CMP	R3, 000bh			; Na primeira iteração, salta para a etiqueta "meio"
-			BR.Z	meio
+			BR.Z	meio4
 			POP 	R3
 			POP		R1
 			RET
+
+
+;===============================================================================
+;  Tabuleiro5: gera o tabuleiro onde o jogo será jogado
+;===============================================================================
+Tabuleiro5:	PUSH	R1
+			PUSH	R3
+			MOV		R3, 000bh			; numero de linhas do tabuleiro(10 para jogar + 1 para a solucao)
+			CALL    LimpaJanela
+			MOV     R1, XY_INICIAL	    ; coloca R1 a apontar para a pos inicial
+            BR  	cimabaixo5 
+meio5:		ADD     R1, 0100h			; Mover o cursor para escrever o texto
+			PUSH    PlanoJogo2           ; Passagem de parametros pelo STACK
+            PUSH    R1                  ; Passagem de parametros pelo STACK
+			CALL	EscString
+			CALL	MostraPecas			; Linha Inicial do tabuleiro
+	        ADD     R1, 0100h			; Mover o cursor para escrever o texto
+          	PUSH    Separador2           ; Passagem de parametros pelo STACK
+            PUSH    R1                  ; Passagem de parametros pelo STACK
+            CALL    EscString
+			DEC		R3 					; por cada linha de tabuleiro, decrementa o numero de linhas
+			CMP		R3, R0		    	; todos os espacos de jogo estao criados quando R3=0
+			BR.NZ	meio5 				; enquanto nao chegar a zero salta para a etiqueta "meio" para continuar a escrever
+cimabaixo5:	ADD	R1, 0100h			; Mover o cursor para escrever o texto
+            PUSH    Limites2             ; Passagem de parametros pelo STACK
+            PUSH    R1                  ; Passagem de parametros pelo STACK
+            CALL    EscString
+			CMP	R3, 000bh			; Na primeira iteração, salta para a etiqueta "meio"
+			BR.Z	meio5
+			POP 	R3
+			POP		R1
+			RET
+
+
+;===============================================================================
+;  Tabuleiro6: gera o tabuleiro onde o jogo será jogado
+;===============================================================================
+Tabuleiro6:	PUSH	R1
+			PUSH	R3
+			MOV		R3, 000bh			; numero de linhas do tabuleiro(10 para jogar + 1 para a solucao)
+			CALL    LimpaJanela
+			MOV     R1, XY_INICIAL	    ; coloca R1 a apontar para a pos inicial
+            BR  	cimabaixo6 
+meio6:		ADD     R1, 0100h			; Mover o cursor para escrever o texto
+			PUSH    PlanoJogo3           ; Passagem de parametros pelo STACK
+            PUSH    R1                  ; Passagem de parametros pelo STACK
+			CALL	EscString
+			CALL	MostraPecas			; Linha Inicial do tabuleiro
+	        ADD     R1, 0100h			; Mover o cursor para escrever o texto
+          	PUSH    Separador3           ; Passagem de parametros pelo STACK
+            PUSH    R1                  ; Passagem de parametros pelo STACK
+            CALL    EscString
+			DEC		R3 					; por cada linha de tabuleiro, decrementa o numero de linhas
+			CMP		R3, R0		    	; todos os espacos de jogo estao criados quando R3=0
+			BR.NZ	meio6 				; enquanto nao chegar a zero salta para a etiqueta "meio" para continuar a escrever
+cimabaixo6:	ADD	R1, 0100h			; Mover o cursor para escrever o texto
+            PUSH    Limites3             ; Passagem de parametros pelo STACK
+            PUSH    R1                  ; Passagem de parametros pelo STACK
+            CALL    EscString
+			CMP	R3, 000bh			; Na primeira iteração, salta para a etiqueta "meio"
+			BR.Z	meio6
+			POP 	R3
+			POP		R1
+			RET
+
 ;===============================================================================
 ;  GeraRand: Gera número da Cor aleatória
 ;===============================================================================
@@ -698,7 +767,7 @@ RotinaIntTemp:  PUSH 	R1
 				BR.Z    GoToEnd 			;Se estiver saltar logo para o fim(o cronometro ja terminou)
 				CMP 	R3, 0004H  			;Verificar se o utilizador ja acertou na sequencia completa 
 				BR.Z 	alreadywon 		        ;Se sim, saltar logo para a etiqueta alreadywon
-				CMP 	R6, M[CronTmp] 			;Comparar com 2(Inicio da Contagem)
+				CMP 	R6, M[CronTmp]			;Comparar com 2(Inicio da Contagem) 
 				BR.Z 	Write 				;Se for o inicio, saltar logo para a etiqueta "Write"
 				CMP 	R6, FFFFh 			;Comparar com -1(Fim da contagem de minutos)
 				BR.Z 	GoToEnd 			;Se for o final, saltar logo para o final, sem escrita
@@ -1058,18 +1127,28 @@ EscEcraFinalD:	PUSH	R1
 ;===============================================================================
 inicio:         MOV     R1, SP_INICIAL   	
                 MOV     SP, R1
-				CALL	MenuEscolhe			
+				CALL	MenuEscolhe	
+				CALL 	ResetTime		
 				MOV 	R3, XY_INICIAL      ;Guardar a posicao inicial do cursor de texto
 				MOV		M[IO_CURSOR], R3    ;Carregar essa posicao no cursor 
-ProxJog:		MOV		R1,0001h    ;variavel que conta o numero	
+				MOV		R1,0001h    ;variavel que conta o numero	
 				MOV		M[WinTent],R0
 				SUB		M[NumJgds],R1
 				ADD		M[WinNmbr],R1
-				CALL 	LimpaJanela         
-				CALL 	MeteX               
-				CALL 	Tabuleiro
 				CALL 	GeraTudo
-				CALL 	InitInt
+ProxJog:		CALL 	LimpaJanela         
+				CALL 	MeteX 
+				MOV 	R4, M[NumPecas]
+				CMP 	R4,0004h
+				BR.NZ 	Not4              
+				CALL 	Tabuleiro4
+				BR  	inigame
+Not4:			CMP 	R4,0005h
+				BR.NZ 	Not5              
+				CALL 	Tabuleiro5
+				BR 		inigame
+Not5: 			CALL 	Tabuleiro6 
+inigame:		CALL 	InitInt
 				MOV		R1, NUM_JOGADAS     ;Guardar o numero de jogadas 
 				MOV		R2, 1608h	    ;Guardar a nova posicao de escrita no ecra
 tentar:			MOV		R4, 0001h
