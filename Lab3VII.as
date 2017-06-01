@@ -156,7 +156,6 @@ NumPecas 	WORD 	0004h
 CronTmp 	WORD 	0002h
 ;Variaveis Estatisticas
 ContagemJogos 	WORD 	0000h 
-ContaJogadasAux	WORD 	0000h 
 ContaJogadas 	WORD 	0000h
 MelhorTempoMin 	TAB 	VECSIZE
 MelhorTempoDec	TAB 	VECSIZE 
@@ -212,7 +211,7 @@ EscCar:         MOV     M[IO_WRITE], R1
 ;===============================================================================
 EscString:      PUSH    R1
                 PUSH    R2
-		PUSH    R3
+				PUSH    R3
                 MOV     R2, M[SP+6]   ; Apontador para inicio da "string"
                 MOV     R3, M[SP+5]   ; Localizacao do primeiro carater
 Ciclo:          MOV     M[IO_CURSOR], R3
@@ -772,7 +771,7 @@ apareceX:    MOV	M[IO_CURSOR], R3
 ;===============================================================================
 ;  Jogada: leitura e escrita no ecra das peças em cada jogada
 ;===============================================================================
-Jogada:		PUSH	R1
+Jogada:	PUSH	R1
 		PUSH	R2
 		PUSH	R3
 		PUSH	R4
@@ -780,8 +779,10 @@ Jogada:		PUSH	R1
 		PUSH	R6
 		PUSH	R7
 						;Guardar as peças em memoria auxiliar temporariamente
+		INC 	M[ContaJogadas]
 		MOV	R4, PecaA
 		MOV	R5, SPecaA
+		MOV R7, R0 
 SavePecas:	MOV	R6, M[R4]
 		MOV	M[R5], R6
 		INC	R4
@@ -830,7 +831,6 @@ validacao:	MOV	R1, M[RIGHT_POS] 		;Guarda o numero de cores certas na posicao ce
 		PUSH	R2  				
 		PUSH	R1
 			CALL	ValidaJogadaP
-		INC M[ContaJogadasAux]
 		MOV	R3, M[RIGHT_POS]   	;Compara o numero de cores certas na posicao certa com 4
 		CMP 	R3, 0004h 
 		BR.Z 	fimjogada  		    ; Se for 4 entao o utilizador acertou na sequencia, e saltamos para o fim da rotina
@@ -848,11 +848,7 @@ LoadPecas:	MOV	R6, M[R5]
 		INC	R7
 		CMP	R7, M[NumPecas]
 		BR.NZ	LoadPecas
-		BR 	fimjogada 
-Termina: MOV R1, M[ContaJogadasAux]
-		MOV M[ContaJogadas], R1 
-		MOV M[ContaJogadasAux], R0  
-fimjogada: POP	R7
+fimjogada:  POP	R7
 		POP	R6
 		POP	R5
 		POP	R4
@@ -1063,6 +1059,8 @@ GameOverWin: 	PUSH 	R1
 			CALL 	EscString
 		MOV	R1, 0001h
 		MOV	M[EndofTimeFlag],R1
+		CALL Estatisticas 
+		CALL EscLCD
 		POP  	R1
 		RET
 ;===============================================================================
@@ -1182,12 +1180,6 @@ EscolheCores:	PUSH	R1
 			CALL 	EscEcraDific2
 StartClr:	MOV 	R2, M[IO_STAT]
 		CMP 	R2, R0 
-		MOV	M[TempControlo], R1		;Colocar na posicao de memoria apontada por TempControlo o valor 1 para o cronometro avancar efetivamente
-		BR 	Endd 					;Saltar para o fim(o cronometro ainda nao acabou)
-         MOV     R2, 0001h   			;Ativar a flag do fim do cronometro
-		MOV 	M[EndofTimeFlag], R2		;Guardar a flag na memoria				
-Endd:		MOV 	M[Aux6], R6 		;Guardar na memoria o valor das unidades de minuto 
-		MOV 	M[Aux5], R5 	
 		BR.Z 	StartClr
 		MOV 	R1, M[IO_READ]
 		CMP 	R1, '4'
@@ -1199,6 +1191,7 @@ Endd:		MOV 	M[Aux6], R6 		;Guardar na memoria o valor das unidades de minuto
 		POP 	R2
 		POP 	R1
 		RET
+		
 		
 ;===============================================================================
 ; SaveGame: Rotina que guarda os dados do jogo de forma a apresentar o vencedor
@@ -1436,12 +1429,113 @@ NotBetterSeg: 	MOV  R1, M[ContaJogadas]
 				POP  R1
 				RET
 
+;===============================================================================
+; Estatisticas: rotina que estuda as estatisticas do jogo 
+;===============================================================================
+Estatisticas:	PUSH R1
+				PUSH R2
+				PUSH R3
+				PUSH R4
+				PUSH R5
+				MOV  R3, M[ContagemJogos]	;R3 guarda o número de jogos 
+				MOV  R2, M[WinNmbr]     	;R2 guarda o número do jogador (para aceder ao vetor)
+				MOV  R1, M[Aux6]   			;R1 guarda o valor do tempo (em minutos)
+				MOV  R5, SumTempoMin   		;R5 guarda o endereço da primeira posição do vetor das somas de minutos
+				ADD  R5, R2                 ;Soma ao número do jogador (para colocar o vetor na posição certa)
+				ADD  M[R5], R1              ;Soma o valor obtido para os minutos
+				MOV  R4, M[R5]              
+				DIV  R4, R3                 ;Calcula o tempo médio (minutos)
+				MOV  R5, MediaTempoMin      ;
+				ADD  R5, R2
+				MOV  M[R5], R4
+				MOV  R5, MelhorTempoMin
+				ADD  R5, R2
+				CMP  M[R5], R1 
+				BR.NN  NotBetterMin
+				MOV  M[R5], R1
+NotBetterMin: 	MOV  R1, M[Aux5]
+				MOV  R5, SumTempoDec
+				ADD  R5, R2
+				ADD  M[R5], R1
+				MOV  R4, M[R5]
+				DIV  R4, R3 
+				MOV  R5, MediaTempoDec
+				ADD  R5, R2
+				MOV  M[R5], R4
+				MOV  R5, MelhorTempoDec
+				ADD  R5, R2 
+				CMP  M[R5], R1 
+				BR.NN  NotBetterDec
+				MOV  M[R5], R1
+NotBetterDec: 	MOV  R1, M[Aux4]
+				MOV  R5, SumTempoSeg
+				ADD  R5, R2
+				ADD  M[R5], R1
+				MOV  R4, M[R5]
+				DIV  R4, R3 
+				MOV  R5, MediaTempoSeg
+				ADD  R5, R2
+				MOV  M[R5], R4
+				MOV  R5, MelhorTempoSeg
+				ADD  R5, R2
+				CMP  M[R5], R1 
+				BR.NN  NotBetterSeg
+				MOV  M[R5], R1
+NotBetterSeg: 	MOV  R1, M[ContaJogadas]
+				MOV  R5, SumNumJogadas
+				ADD  R5, R2
+				ADD  M[R5], R1
+				MOV  R1, M[R5]
+				DIV  R1, R3
+				MOV  R5, MediaNumJogadas
+				ADD  R5, R2
+				MOV  M[R5], R1
+				POP  R5
+				POP  R4
+				POP  R3
+				POP	 R2
+				POP  R1
+				RET
+
+
+;===============================================================================
+; Refresh: inicializar as variáveis a cada novo jogo ´´E PRECISO REMOVER?????
+;===============================================================================
+Refresh:		PUSH 	R1
+				PUSH	R2
+				MOV  	R1, PecaA
+				MOV 	R2, 0000h
+ZeroPecas:		MOV 	M[R1], R2
+				INC 	R1
+				CMP 	R1, AuxPecaF
+				BR.NP 	ZeroPecas 
+				MOV  	R1, TentA
+ZeroTentativas:	MOV  	M[R1], R2
+				INC 	R1
+				CMP 	R1, TentF 
+				BR.NP 	ZeroTentativas
+				MOV 	R1, Aux6
+				MOV 	R2, 0004h 
+				MOV 	M[R1], R2
+				MOV 	R1, Aux5
+				MOV 	R2, 0000h
+Zero1:			MOV 	M[R1], R2 
+				INC 	R1 
+				CMP   	R1, RealTime4
+				BR.NZ 	Zero1
+				POP 	R2 
+				POP 	R1
+				RET 
+
+
 
 ;===============================================================================
 ;                                Programa principal
 ;===============================================================================
 inicio:         MOV     R1, SP_INICIAL   	
                 MOV     SP, R1				;Coloca o stack pointer logo antes da zona de interrupções
+				CALL 	CLRLCD
+				MOV 	M[WinNmbr], R0 		
 				CALL	MenuEscolhe			;Menu para escolher o modo
 				CALL 	ResetTime			;Reset Inicial do tempo
 				INC 	M[ContagemJogos]	;Incrementa o número de jogos 
@@ -1489,8 +1583,6 @@ FimLose:       	CALL 	GameOverLose   		;Se o jogador perdeu, escrever essa mensa
 FimWin:			CALL 	GameOverWin  		;Se o jogador ganhou, escrever essa mensagem
 				CALL	SaveGame		;Guarda os dados do jogo no caso de vitória
 Fim:			CALL 	MostraPecas   		;No final, mostrar qual a sequencia
-				CALL 	Estatisticas
-				CALL 	EscLCD
 				CMP		M[NumJgds],R0			
 				BR.Z	SuperFim			;Se já não restam jogadores o jogo acaba
 				CALL 	Delay			;Se restam espera-se que passe a vez ao seguinte
