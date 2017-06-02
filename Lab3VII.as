@@ -160,6 +160,8 @@ ContaJogadas 	WORD 	0000h
 MelhorTempoMin 	TAB 	VECSIZE
 MelhorTempoDec	TAB 	VECSIZE 
 MelhorTempoSeg 	TAB 	VECSIZE 
+AdicionarMedia	TAB 	VECSIZE
+AdicionarMediaAtual TAB 	VECSIZE 
 MediaTempoMin	TAB   	VECSIZE
 MediaTempoDec 	TAB 	VECSIZE
 MediaTempoSeg 	TAB 	VECSIZE 
@@ -168,6 +170,7 @@ SumTempoDec 	TAB 	VECSIZE
 SumTempoSeg 	TAB 	VECSIZE
 SumNumJogadas 	TAB 	VECSIZE
 MediaNumJogadas TAB 	VECSIZE 
+MediaNumJogadasDec 	TAB 	VECSIZE 
 ;===============================================================================
 ; ZONA III: Codigo
 ;===============================================================================
@@ -288,6 +291,18 @@ EscLCD:         PUSH    R1
 				INC 	R1 
 				MOV 	R3, M[WinNmbr]	
 				MOV     R2,MediaNumJogadas
+				ADD 	R2, R3 
+				MOV 	R2, M[R2]
+				ADD 	R2, 0030h
+				MOV		M[LCD_CURSOR], R1
+				MOV		M[LCD_WRITE], R2
+				INC 	R1 
+				MOV 	R2, ',' 
+				MOV		M[LCD_CURSOR], R1
+				MOV		M[LCD_WRITE], R2
+				INC 	R1 
+				MOV 	R3, M[WinNmbr]	
+				MOV     R2,MediaNumJogadasDec
 				ADD 	R2, R3 
 				MOV 	R2, M[R2]
 				ADD 	R2, 0030h
@@ -1059,6 +1074,7 @@ GameOverWin: 	PUSH 	R1
 			CALL 	EscString
 		MOV	R1, 0001h
 		MOV	M[EndofTimeFlag],R1
+		INC 	M[ContagemJogos]	;Incrementa o número de jogos ganhos
 		CALL Estatisticas 
 		CALL EscLCD
 		POP  	R1
@@ -1364,64 +1380,95 @@ EscEcraFinalL:	PUSH	R1
 ;===============================================================================
 ; Estatisticas: rotina que estuda as estatisticas do jogo 
 ;===============================================================================
-Estatisticas:	PUSH R1
+Estatisticas:	CALL MelhorTempo
+				CALL MediaJgds
+				CALL MediaTempos
+				RET 
+
+;===============================================================================
+; MelhorTempo: rotina que estuda as estatisticas do jogo 
+;===============================================================================
+MelhorTempo:	PUSH R1
+				PUSH R2
+				PUSH R3
+				MOV  R3, M[ContagemJogos]
+				CMP  R3,0001h
+				MOV  R2, M[WinNmbr]     	;R2 guarda o número do jogador (para aceder ao vetor)
+				BR.NZ notthefirst
+				MOV  R1, M[Aux6]   			;R1 guarda o valor do tempo (em minutos)
+				MOV  R3, MelhorTempoMin
+				ADD  R3, R2
+				MOV  M[R3], R1
+				MOV  R1, M[Aux5]   			;R1 guarda o valor do tempo (em minutos)
+				MOV  R3, MelhorTempoDec
+				ADD  R3, R2
+				MOV  M[R3], R1
+				MOV  R1, M[Aux4]   			;R1 guarda o valor do tempo (em minutos)
+				MOV  R3, MelhorTempoSeg
+				ADD  R3, R2
+				MOV  M[R3], R1
+notthefirst:	MOV  R2, M[WinNmbr]     	;R2 guarda o número do jogador (para aceder ao vetor)
+				MOV  R1, M[Aux6]   			;R1 guarda o valor do tempo (em minutos)
+				MOV  R3, MelhorTempoMin
+				ADD  R3, R2
+				CMP  R1, M[R3]
+				BR.N NotBetter
+				MOV  M[R3], R1
+				MOV  R1, M[Aux5]   			;R1 guarda o valor do tempo (em minutos)
+				MOV  R3, MelhorTempoDec
+				ADD  R3, R2
+				CMP  R1, M[R3]
+				BR.N NotBetter
+				MOV  M[R3], R1
+				MOV  R1, M[Aux4]   			;R1 guarda o valor do tempo (em minutos)
+				MOV  R3, MelhorTempoSeg
+				ADD  R3, R2
+				CMP  R1, M[R3]
+				BR.N NotBetter
+				MOV  M[R3], R1
+NotBetter: 		POP  R3
+				POP  R2
+				POP  R1 
+				RET
+
+
+;===============================================================================
+; MediaJgds: rotina que estuda as estatisticas do jogo 
+;===============================================================================
+MediaJgds:	    PUSH R1
 				PUSH R2
 				PUSH R3
 				PUSH R4
 				PUSH R5
+				PUSH R6
+				PUSH R7
 				MOV  R3, M[ContagemJogos]	;R3 guarda o número de jogos 
 				MOV  R2, M[WinNmbr]     	;R2 guarda o número do jogador (para aceder ao vetor)
-				MOV  R1, M[Aux6]   			;R1 guarda o valor do tempo (em minutos)
-				MOV  R5, SumTempoMin   		;R5 guarda o endereço da primeira posição do vetor das somas de minutos
-				ADD  R5, R2                 ;Soma ao número do jogador (para colocar o vetor na posição certa)
-				ADD  M[R5], R1              ;Soma o valor obtido para os minutos
-				MOV  R4, M[R5]              
-				DIV  R4, R3                 ;Calcula o tempo médio (minutos)
-				MOV  R5, MediaTempoMin      ;
-				ADD  R5, R2
-				MOV  M[R5], R4
-				MOV  R5, MelhorTempoMin
-				ADD  R5, R2
-				CMP  M[R5], R1 
-				BR.NN  NotBetterMin
-				MOV  M[R5], R1
-NotBetterMin: 	MOV  R1, M[Aux5]
-				MOV  R5, SumTempoDec
-				ADD  R5, R2
-				ADD  M[R5], R1
-				MOV  R4, M[R5]
-				DIV  R4, R3 
-				MOV  R5, MediaTempoDec
-				ADD  R5, R2
-				MOV  M[R5], R4
-				MOV  R5, MelhorTempoDec
-				ADD  R5, R2 
-				CMP  M[R5], R1 
-				BR.NN  NotBetterDec
-				MOV  M[R5], R1
-NotBetterDec: 	MOV  R1, M[Aux4]
-				MOV  R5, SumTempoSeg
-				ADD  R5, R2
-				ADD  M[R5], R1
-				MOV  R4, M[R5]
-				DIV  R4, R3 
-				MOV  R5, MediaTempoSeg
-				ADD  R5, R2
-				MOV  M[R5], R4
-				MOV  R5, MelhorTempoSeg
-				ADD  R5, R2
-				CMP  M[R5], R1 
-				BR.NN  NotBetterSeg
-				MOV  M[R5], R1
 NotBetterSeg: 	MOV  R1, M[ContaJogadas]
-				MOV  R5, SumNumJogadas
-				ADD  R5, R2
-				ADD  M[R5], R1
-				MOV  R1, M[R5]
-				DIV  R1, R3
-				MOV  R5, MediaNumJogadas
-				ADD  R5, R2
-				MOV  M[R5], R1
+				MOV  R4, SumNumJogadas
+				ADD  R4, R2
+				ADD  M[R4], R1
+				MOV  R5, M[R4]
+				DIV  R5, R3
+				MOV  R6, MediaNumJogadas
+				ADD  R6, R2
+				MOV  M[R6], R5
+				MOV  R5, M[R4]
+				MOV  R6, R5
+				MOV  R7, R0
+Soma10:			ADD  R5, R6
+				INC  R7
+				CMP  R7, 0009h
+				BR.NZ Soma10
+				MOV  R7, M[ContagemJogos]
+				DIV  R5, R7 
+				MOV  R7, 000ah
+				DIV  R5, R7 
+				MOV  R6, MediaNumJogadasDec
+				ADD  R6, R2
+				MOV  M[R6], R7
+				POP  R7
+				POP  R6
 				POP  R5
 				POP  R4
 				POP  R3
@@ -1429,67 +1476,95 @@ NotBetterSeg: 	MOV  R1, M[ContaJogadas]
 				POP  R1
 				RET
 
+
 ;===============================================================================
-; Estatisticas: rotina que estuda as estatisticas do jogo 
+; MediaTempos: rotina que estuda as estatisticas do jogo 
 ;===============================================================================
-Estatisticas:	PUSH R1
+MediaTempos:	PUSH R1
 				PUSH R2
 				PUSH R3
 				PUSH R4
 				PUSH R5
-				MOV  R3, M[ContagemJogos]	;R3 guarda o número de jogos 
+				PUSH R6
+				MOV  R1, M[ContagemJogos]	;R3 guarda o número de jogos 
 				MOV  R2, M[WinNmbr]     	;R2 guarda o número do jogador (para aceder ao vetor)
-				MOV  R1, M[Aux6]   			;R1 guarda o valor do tempo (em minutos)
-				MOV  R5, SumTempoMin   		;R5 guarda o endereço da primeira posição do vetor das somas de minutos
-				ADD  R5, R2                 ;Soma ao número do jogador (para colocar o vetor na posição certa)
-				ADD  M[R5], R1              ;Soma o valor obtido para os minutos
-				MOV  R4, M[R5]              
-				DIV  R4, R3                 ;Calcula o tempo médio (minutos)
-				MOV  R5, MediaTempoMin      ;
-				ADD  R5, R2
-				MOV  M[R5], R4
-				MOV  R5, MelhorTempoMin
-				ADD  R5, R2
-				CMP  M[R5], R1 
-				BR.NN  NotBetterMin
-				MOV  M[R5], R1
-NotBetterMin: 	MOV  R1, M[Aux5]
-				MOV  R5, SumTempoDec
-				ADD  R5, R2
-				ADD  M[R5], R1
-				MOV  R4, M[R5]
-				DIV  R4, R3 
-				MOV  R5, MediaTempoDec
-				ADD  R5, R2
-				MOV  M[R5], R4
-				MOV  R5, MelhorTempoDec
-				ADD  R5, R2 
-				CMP  M[R5], R1 
-				BR.NN  NotBetterDec
-				MOV  M[R5], R1
-NotBetterDec: 	MOV  R1, M[Aux4]
-				MOV  R5, SumTempoSeg
-				ADD  R5, R2
-				ADD  M[R5], R1
-				MOV  R4, M[R5]
-				DIV  R4, R3 
-				MOV  R5, MediaTempoSeg
-				ADD  R5, R2
-				MOV  M[R5], R4
-				MOV  R5, MelhorTempoSeg
-				ADD  R5, R2
-				CMP  M[R5], R1 
-				BR.NN  NotBetterSeg
-				MOV  M[R5], R1
-NotBetterSeg: 	MOV  R1, M[ContaJogadas]
-				MOV  R5, SumNumJogadas
-				ADD  R5, R2
-				ADD  M[R5], R1
-				MOV  R1, M[R5]
-				DIV  R1, R3
-				MOV  R5, MediaNumJogadas
-				ADD  R5, R2
-				MOV  M[R5], R1
+				CMP  R1, 0001h
+				BR.NZ Domedia
+				MOV R3, M[Aux6]
+				MOV R4, MediaTempoMin
+				ADD R4, R2
+				MOV M[R4],R3
+				MOV R3, M[Aux5]
+				MOV R4, MediaTempoDec
+				ADD R4, R2
+				MOV M[R4],R3
+				MOV R3, M[Aux4]
+				MOV R4, MediaTempoSeg
+				ADD R4, R2
+				MOV M[R4],R3
+				JMP Sai
+Domedia:		MOV  R3, M[Aux6]
+				MOV  R4, R0
+				MOV  R6, R3 
+ConvMin:		ADD  R3, R6
+				INC  R4 
+				CMP  R4, 99
+				BR.NZ  ConvMin
+				ADD  M[AdicionarMedia], R3
+				MOV  R3, M[Aux5]
+				MOV  R4, R0 
+				MOV  R6, R3
+ConvDec:		ADD  R3, R6
+				INC  R4 
+				CMP  R4, 9
+				BR.NZ  ConvDec
+				ADD  M[AdicionarMedia], R3
+				MOV  R3, M[Aux4]
+				ADD  M[AdicionarMedia], R3
+				MOV  R3, MediaTempoMin
+				ADD  R3, R2 
+				MOV  R5, M[R3]
+				MOV  R4, R0 
+				MOV  R6, M[R3]
+ConvMediaMin:	ADD  R5, R6
+				INC  R4 
+				CMP  R4, 99
+				BR.NZ  ConvMediaMin
+				ADD  M[AdicionarMediaAtual], R5
+				MOV  R3, MediaTempoDec
+				ADD  R3, R2 
+				MOV  R5, M[R3]
+				MOV  R6, M[R3]
+				MOV  R4, R0 
+ConvMediaDec:	ADD  R5, R6
+				INC  R4 
+				CMP  R4, 9
+				BR.NZ  ConvMediaDec
+				ADD  M[AdicionarMediaAtual], R5
+				MOV  R3, MediaTempoSeg
+				ADD  R3, R2 
+				MOV  R5, M[R3]
+				ADD  M[AdicionarMediaAtual],R5
+				MOV  R3, R1 
+				DEC R3
+				MOV R4, M[AdicionarMediaAtual]
+				MOV R6, R4
+				MOV R4,R0
+ConverteMedia:	ADD R4, R6
+				DEC R3 
+				BR.NZ ConverteMedia
+				ADD R4, M[AdicionarMedia]
+				DIV R4, R1 
+				MOV R1, 10 
+				DIV R4, R1 
+				MOV M[MediaTempoSeg], R1
+				MOV R1, 10
+				DIV R4, R1 
+				MOV M[MediaTempoDec], R1 
+				MOV M[MediaTempoMin], R4
+				MOV M[AdicionarMedia], R0 
+				MOV M[AdicionarMediaAtual], R0
+Sai:			POP  R6
 				POP  R5
 				POP  R4
 				POP  R3
@@ -1538,11 +1613,11 @@ inicio:         MOV     R1, SP_INICIAL
 				MOV 	M[WinNmbr], R0 		
 				CALL	MenuEscolhe			;Menu para escolher o modo
 				CALL 	ResetTime			;Reset Inicial do tempo
-				INC 	M[ContagemJogos]	;Incrementa o número de jogos 
 				MOV 	R3, XY_INICIAL      ;Guardar a posicao inicial do cursor de texto
 				MOV		M[IO_CURSOR], R3    ;Carregar essa posicao no cursor 
 				CALL 	MeteX 			        ;Coloca os X a "tapar" o resultado
-ProxJog:		MOV		R1,0001h    			;R1 é utilizado como meio para incremento e decremento de memorias
+ProxJog:		MOV 	M[ContaJogadas], R0
+				MOV		R1,0001h    			;R1 é utilizado como meio para incremento e decremento de memorias
 				MOV		M[WinTent],R0			;RESET	do numero de tentativas
 				SUB		M[NumJgds],R1			;Diminui o numero de jogadores restantes
 				ADD		M[WinNmbr],R1			;Aumenta o numero do jogador em questão
