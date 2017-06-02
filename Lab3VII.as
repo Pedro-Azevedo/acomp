@@ -1489,43 +1489,44 @@ MediaTempos:	PUSH 	R1
 				PUSH 	R4
 				PUSH 	R5
 				PUSH 	R6
-				MOV  	R1, M[ContagemJogos]	;R3 guarda o número de jogos 
-				MOV  	R2, M[WinNmbr]     	;R2 guarda o número do jogador (para aceder ao vetor)
-				CMP  	R1, 0001h
+				MOV  	R1, M[ContagemJogos]	;R3 guarda o número de jogos ganhos
+				MOV  	R2, M[WinNmbr]     		;R2 guarda o número do jogador (para aceder ao vetor)
+				CMP  	R1, 0001h   			;Verifica se estamos no caso do primeiro jogo ganho 
+				  								;Nesse caso o valor das médias será simplesmente a cópia do valor obtido
 				BR.NZ 	Domedia
 				MOV 	R3, M[Aux6]
-				MOV 	R4, MediaTempoMin
-				ADD 	R4, R2
+				MOV 	R4, MediaTempoMin 		;R4 guarda o endereço do vetor MediaTempoMin (posição 0)
+				ADD 	R4, R2                  ;R4 desloca-se para a posição "nº do jogador" do vetor 
 				MOV 	M[R4],R3
 				MOV 	R3, M[Aux5]
-				MOV 	R4, MediaTempoDec
-				ADD 	R4, R2
+				MOV 	R4, MediaTempoDec       ;R4 guarda o endereço do vetor MediaTempoDec (posição 0)
+				ADD 	R4, R2                  ;R4 desloca-se para a posição "nº do jogador" do vetor 
 				MOV 	M[R4],R3
 				MOV 	R3, M[Aux4]
-				MOV 	R4, MediaTempoSeg
-				ADD 	R4, R2
+				MOV 	R4, MediaTempoSeg      	;R4 guarda o endereço do vetor MediaTempoSeg (posição 0)
+				ADD 	R4, R2                  ;R4 desloca-se para a posição "nº do jogador" do vetor 
 				MOV 	M[R4],R3
 				JMP 	Sai
-Domedia:		MOV  	R3, M[Aux6]
+Domedia:		MOV  	R3, M[Aux6] 			;Vamos agora converter um tempo da forma #:## para um número ###
 				MOV  	R4, R0
 				MOV  	R6, R3 
-ConvMin:		ADD  	R3, R6
+ConvMin:		ADD  	R3, R6                 	;Adicionamos o valor dos minutos 100 vezes a ele próprio (equivalente a multiplicar por 100)
 				INC  	R4 
 				CMP  	R4, 99
 				BR.NZ  	ConvMin
-				ADD  	M[AdicionarMedia], R3
+				ADD  	M[AdicionarMedia], R3   ;Guardamos o valor obtido na variável AdicionarMedia
 				MOV  	R3, M[Aux5]
 				MOV  	R4, R0 
 				MOV  	R6, R3
-ConvDec:		ADD  	R3, R6
+ConvDec:		ADD  	R3, R6                  ;Adicionamos o valor das dezenas de segundo 10 vezes a ele próprio (equivalente a multiplicar por 10)
 				INC  	R4 
 				CMP  	R4, 9
 				BR.NZ  	ConvDec
-				ADD  	M[AdicionarMedia], R3
+				ADD  	M[AdicionarMedia], R3   ;Guardamos o valor obtido na variável AdicionarMedia
 				MOV  	R3, M[Aux4]
-				ADD  	M[AdicionarMedia], R3
-				MOV  	R3, MediaTempoMin
-				ADD  	R3, R2 
+				ADD  	M[AdicionarMedia], R3   ;Guardamos o valor dos segundos na variável AdicionarMedia
+				MOV  	R3, MediaTempoMin 		;Vamos aplicar o mesmo algoritmo, agora para converter num numero o valor atual da média
+				ADD  	R3, R2 w
 				MOV  	R5, M[R3]
 				MOV  	R4, R0 
 				MOV  	R6, M[R3]
@@ -1533,8 +1534,8 @@ ConvMediaMin:	ADD  	R5, R6
 				INC  	R4 
 				CMP  	R4, 99
 				BR.NZ  	ConvMediaMin
-				ADD  	M[AdicionarMediaAtual], R5
-				MOV  	R3, MediaTempoDec
+				ADD  	M[AdicionarMediaAtual], R5  	;Guardamos o valor obtido na variável AdicionarMediaAtual
+				MOV  	R3, MediaTempoDec   			
 				ADD  	R3, R2 
 				MOV  	R5, M[R3]
 				MOV  	R6, M[R3]
@@ -1543,36 +1544,36 @@ ConvMediaDec:	ADD  	R5, R6
 				INC  	R4 
 				CMP  	R4, 9
 				BR.NZ  	ConvMediaDec
-				ADD  	M[AdicionarMediaAtual], R5
+				ADD  	M[AdicionarMediaAtual], R5     ;Guardamos o valor obtido na variável AdicionarMediaAtual
 				MOV  	R3, MediaTempoSeg
 				ADD  	R3, R2 
 				MOV  	R5, M[R3]
-				ADD  	M[AdicionarMediaAtual],R5
-				MOV  	R3, R1 
-				DEC 	R3
-				MOV 	R4, M[AdicionarMediaAtual]
+				ADD  	M[AdicionarMediaAtual],R5      ;Guardamos o valor obtido na variável AdicionarMediaAtual
+				MOV  	R3, R1                         ;R3 guarda o valor do número de jogos ganhos
+				DEC 	R3                             ;Decrementamos esse valor (será usado em baixo para os cálculos da nova média)
+				MOV 	R4, M[AdicionarMediaAtual]     ;R4 vai guardar o valor convertido da média atual
 				MOV 	R6, R4
-				MOV 	R4,R0
-ConverteMedia:	ADD 	R4, R6
+				MOV 	R4,R0 
+ConverteMedia:	ADD 	R4, R6                         ;Somamos o valor da média atual a ele própria "nº de jogos ganhos -1" vezes
 				DEC 	R3 
 				BR.NZ 	ConverteMedia
-				ADD 	R4, M[AdicionarMedia]
-				DIV 	R4, R1 
-				MOV 	R1, 10 
-				DIV 	R4, R1 
+				ADD 	R4, M[AdicionarMedia]          ;Ao valor guardado em R4 adicionamos o valor da jogada atual
+				DIV 	R4, R1                         ;Dividimos o valor obtido pelo número de jogos ganhos obtendo assim a média 
+				MOV 	R1, 10                         ;Agora temos de desfazer a conversão #:## em ### 
+				DIV 	R4, R1                         ;Dividimos por 10 sendo o resto o valor dos segundos, que é guardado na posição "nº do jogador" do vetor MediaTempoSeg
 				MOV 	R5, MediaTempoSeg
 				ADD 	R5,R2 
 				MOV 	M[R5], R1
 				MOV 	R1, 10
-				DIV 	R4, R1 
-				MOV 	R5, MediaTempoDec
+				DIV 	R4, R1                         ;Dividimos por 10 sendo o resto o valor das dezenas de segundo, que é guardado na posição "nº do jogador" do vetor MediaTempoDec
+				MOV 	R5, MediaTempoDec 			
 				ADD 	R5, R2 
 				MOV 	M[R5], R1
-				MOV 	R5, MediaTempoMin
+				MOV 	R5, MediaTempoMin              ;o quociente será o valor dos segundos, que é guardado na posição "nº do jogador" do vetor MediaTempoSeg   
 				ADD 	R5, R2
 				MOV 	M[R5], R4
-				MOV 	M[AdicionarMedia], R0 
-				MOV 	M[AdicionarMediaAtual], R0
+				MOV 	M[AdicionarMedia], R0          ;colocar a zero a variável AdicionarMedia
+				MOV 	M[AdicionarMediaAtual], R0     ;colocar a zero a variavel AdicionarMediaAtual
 Sai:			POP  	R6
 				POP  	R5
 				POP  	R4
@@ -1586,15 +1587,15 @@ Sai:			POP  	R6
 ;                                Programa principal
 ;===============================================================================
 inicio:         MOV     R1, SP_INICIAL   	
-                MOV     SP, R1				;Coloca o stack pointer logo antes da zona de interrupções
+                MOV     SP, R1					;Coloca o stack pointer logo antes da zona de interrupções
 				CALL 	CLRLCD
 				MOV 	M[WinNmbr], R0
 				MOV 	R2, M[NumJgdsTemp]
 				MOV 	M[NumJgds], R2 		
-				CALL	MenuEscolhe			;Menu para escolher o modo
-				CALL 	ResetTime			;Reset Inicial do tempo
-				MOV 	R3, XY_INICIAL      ;Guardar a posicao inicial do cursor de texto
-				MOV		M[IO_CURSOR], R3    ;Carregar essa posicao no cursor 
+				CALL	MenuEscolhe				;Menu para escolher o modo
+				CALL 	ResetTime				;Reset Inicial do tempo
+				MOV 	R3, XY_INICIAL      	;Guardar a posicao inicial do cursor de texto
+				MOV		M[IO_CURSOR], R3    	;Carregar essa posicao no cursor 
 				CALL 	MeteX 			        ;Coloca os X a "tapar" o resultado
 ProxJog:		MOV 	M[ContaJogadas], R0
 				MOV		R1,0001h    			;R1 é utilizado como meio para incremento e decremento de memorias
@@ -1607,49 +1608,49 @@ ProxJog:		MOV 	M[ContaJogadas], R0
 				MOV 	R4, M[NumPecas]			;Consoante o numero de peças escolhido R4 assume esse valor
 				CMP 	R4,0004h
 				BR.NZ 	Not4              		
-				CALL 	Tabuleiro4		;se for 4 imprime o tabuleiro4
-				BR  	inigame				;começa o jogo
+				CALL 	Tabuleiro4				;se for 4 imprime o tabuleiro4
+				BR  	inigame					;começa o jogo
 Not4:			CMP 	R4,0005h
 				BR.NZ 	Not5    			          
-				CALL 	Tabuleiro5		;não sendo 4, se for 5 imprime o tabuleiro5
-				BR 		inigame				;começa o jogo
-Not5: 			CALL 	Tabuleiro6 		;não sendo 4 nem 5 imprime o tabuleiro 6
-inigame:		CALL 	InitInt			;começa o jogo
-				MOV		R1, NUM_JOGADAS     		;Guardar o numero de jogadas 
-				MOV		R2, 1608h	   		;Guardar a nova posicao de escrita no ecra
+				CALL 	Tabuleiro5				;não sendo 4, se for 5 imprime o tabuleiro5
+				BR 		inigame					;começa o jogo
+Not5: 			CALL 	Tabuleiro6 				;não sendo 4 nem 5 imprime o tabuleiro 6
+inigame:		CALL 	InitInt					;começa o jogo
+				MOV		R1, NUM_JOGADAS     	;Guardar o numero de jogadas 
+				MOV		R2, 1608h	   			;Guardar a nova posicao de escrita no ecra
 				MOV     R7, M[WinNmbr]
 				CMP     R7, 0001h
 				BR.NZ   tentar 
-				CALL 	GeraTudo		;Gera a sequencia a adivinhar
-tentar:			MOV		R4, 0001h			;Coloca o numero de tentativas a 1
+				CALL 	GeraTudo				;Gera a sequencia a adivinhar
+tentar:			MOV		R4, 0001h				;Coloca o numero de tentativas a 1
 				ADD		M[WinTent],R4	
 				MOV		M[RIGHT_POS],R0			;RESET do valor das peças pretas
-				PUSH	R2				;Passagem de R2 pelo STACK
+				PUSH	R2						;Passagem de R2 pelo STACK
 				MOV 	R3, M[EndofTimeFlag]
-				CMP 	R3, 0001h  			;Verificar se a flag esta ativa 
-				BR.Z 	FimLose  			;Se estiver, saltar para a etiqueta FimLose (o jogador perdeu)
-				CALL 	Jogada			;Senão começa a jogada
+				CMP 	R3, 0001h  				;Verificar se a flag esta ativa 
+				BR.Z 	FimLose  				;Se estiver, saltar para a etiqueta FimLose (o jogador perdeu)
+				CALL 	Jogada					;Senão começa a jogada
 				MOV 	R4, M[RIGHT_POS]  		
 				CMP 	R4, M[NumPecas] 		;Verificar se o utilizador ja acertou na sequencia (Numero de P's = Numero de Pecas)
-				BR.Z 	FimWin  			;Se ja tiver acertado, saltar para a etiqueta FimWin(o jogador ganhou)
-				SUB		R2, 0200h           		;Senão passa à linha superior (proxima jogada)
-				DEC		R1                  		;Decrementa o numero de jogadas restantes
-				BR.NZ	tentar              		;Enquanto nao for zero, continua a jogar
-FimLose:       	CALL 	GameOverLose   		;Se o jogador perdeu, escrever essa mensagem
+				BR.Z 	FimWin  				;Se ja tiver acertado, saltar para a etiqueta FimWin(o jogador ganhou)
+				SUB		R2, 0200h           	;Senão passa à linha superior (proxima jogada)
+				DEC		R1                  	;Decrementa o numero de jogadas restantes
+				BR.NZ	tentar              	;Enquanto nao for zero, continua a jogar
+FimLose:       	CALL 	GameOverLose   			;Se o jogador perdeu, escrever essa mensagem
 				BR 		Fim       			
-FimWin:			CALL 	GameOverWin  		;Se o jogador ganhou, escrever essa mensagem
-				CALL	SaveGame		;Guarda os dados do jogo no caso de vitória
-Fim:			CALL 	MostraPecas   		;No final, mostrar qual a sequencia
+FimWin:			CALL 	GameOverWin  			;Se o jogador ganhou, escrever essa mensagem
+				CALL	SaveGame				;Guarda os dados do jogo no caso de vitória
+Fim:			CALL 	MostraPecas   			;No final, mostrar qual a sequencia
 				CMP		M[NumJgds],R0			
-				BR.Z	SuperFim			;Se já não restam jogadores o jogo acaba
-				CALL 	Delay			;Se restam espera-se que passe a vez ao seguinte
-				JMP		ProxJog				;Reinicia o jogo em si
+				BR.Z	SuperFim				;Se já não restam jogadores o jogo acaba
+				CALL 	Delay					;Se restam espera-se que passe a vez ao seguinte
+				JMP		ProxJog					;Reinicia o jogo em si
 SuperFim:		CMP		M[MultiFlag], R0		
-				BR.Z	HiperFim			;Se o jogo não for multi jogador não se imprime qual dos jogadores ganhou/perdeu/empataram
+				BR.Z	HiperFim				;Se o jogo não for multi jogador não se imprime qual dos jogadores ganhou/perdeu/empataram
 				CMP		M[DrawFlag],R0
-				BR.NZ	DrawOn				;Sendo multijogador, se empatou imprime-se o ecrã de empate
+				BR.NZ	DrawOn					;Sendo multijogador, se empatou imprime-se o ecrã de empate
 				CMP		M[RealNmbr],R0
-				BR.Z	LoseOn				;Sendo multijogador, se não empatou,  no caso de todos terem perdido imprime-se a mensagem de derrota
+				BR.Z	LoseOn					;Sendo multijogador, se não empatou,  no caso de todos terem perdido imprime-se a mensagem de derrota
 				CALL 	EscEcraFinalW			;Sendo multijogador, não havendo empate, nem perdendo todos, imprime-se o vencedor e os seus dados
 				BR		HiperFim			
 DrawOn:			CALL 	EscEcraFinalD	
